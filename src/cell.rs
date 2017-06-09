@@ -267,6 +267,10 @@ macro_rules! cell {
     () => ($crate::cell::Cell::default());
     ($value:expr) => ($crate::cell::Cell::new(&From::from($value)));
     ($style:ident -> $value:expr) => (cell!($value).style_spec(stringify!($style)));
+
+    ($type:ty) => ($crate::cell::Cell::<$type>::default());
+    ($type:ty, $value:expr) => ($crate::cell::Cell::<$type>::new(&From::from($value)));
+    ($type:ty, $style:ident -> $value:expr) => (cell!($type, $value).style_spec(stringify!($style)));
 }
 
 #[cfg(test)]

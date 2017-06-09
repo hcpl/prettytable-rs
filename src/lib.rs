@@ -611,6 +611,14 @@ impl<'a, T, /*S,*/ E> Slice<'a, E> for /*S*/ TableSlice<'a, T>
 /// For details about style specifier syntax, check doc for [`Cell::style_spec`](cell/struct.Cell.html#method.style_spec) method
 #[macro_export]
 macro_rules! table {
+    ($type:ty) => (
+        $crate::Table::<$type>::new()
+    );
+
+    ($type:ty, $([$($content:tt)*]), *) => (
+        $crate::Table::<$type>::init(vec![$(row![$($content)*]), *])
+    );
+
     ($([$($content:tt)*]), *) => (
         $crate::Table::init(vec![$(row![$($content)*]), *])
     );
@@ -621,6 +629,22 @@ macro_rules! table {
 /// The syntax is the same that the one for the `table!` macro
 #[macro_export]
 macro_rules! ptable {
+    ($type:ty) => (
+        {
+            let tab = table!($type);
+            tab.printstd();
+            tab
+        }
+    );
+
+    ($type:ty, $($content:tt)*) => (
+        {
+            let tab = table!($type, $($content)*);
+            tab.printstd();
+            tab
+        }
+    );
+
     ($($content:tt)*) => (
         {
             let tab = table!($($content)*);

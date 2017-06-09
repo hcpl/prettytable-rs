@@ -28,10 +28,18 @@ pub struct CellLines {
     lines: Vec<String>,
 }
 
-impl<S: AsRef<str>> From<S> for CellLines {
+/*impl<S: AsRef<str>> From<S> for CellLines {
     fn from(s: S) -> CellLines {
         CellLines {
             lines: s.as_ref().lines().map(str::to_owned).collect()
+        }
+    }
+}*/
+
+impl<T: ToString> From<T> for CellLines {
+    fn from(value: T) -> CellLines {
+        CellLines {
+            lines: value.to_string().lines().map(str::to_owned).collect()
         }
     }
 }

@@ -20,7 +20,7 @@ fn main() {
     t.add_row(row!["", "10  \n  foobar"]);
     t.add_row(Row::empty());
     t.printstd();
-    /*let _ = table!();
+    let _ = table!(CellLines);
     let mut table = Table::new();
     table.add_row(row![FrByb->"ABC", "DEFG", "HIJKLMN"]);
     table.add_row(row!["foobar", "bar", "foo"]);
@@ -28,11 +28,11 @@ fn main() {
     // Add style to a full row
     table.add_row(row![FY => "styled", "bar", "foo"]);
     table.add_row(Row::new(vec![
-            Cell::new("foobar2"),
+            Cell::new(&CellLines::from("foobar2")),
             // Create a cell with a red foreground color
-            Cell::new("bar2").with_style(Attr::ForegroundColor(color::RED)),
+            Cell::new(&CellLines::from("bar2")).with_style(Attr::ForegroundColor(color::RED)),
             // Create a cell with red foreground color, yellow background color, with bold characters
-            Cell::new("foo2").style_spec("FrByb")])
+            Cell::new(&CellLines::from("foo2")).style_spec("FrByb")])
         );
     for cell in table.column_iter_mut(2) {
         cell.align(Alignment::RIGHT);
@@ -42,20 +42,20 @@ fn main() {
     }
     table.printstd();
     println!("Modified : ");
-    table.set_element("new_foo", 2, 1).unwrap();
+    table.set_element(&CellLines::from("new_foo"), 2, 1).unwrap();
     table.printstd();
     // table.get_format().indent(8);
 
     // Print a table with some styles on it :
     // FrBybl means : Foregound red, Background yellow, bold, left align
     // d means : Default, do nothing
-    ptable!([FrBybl->"A", "B", FrBybr->"C"], [d->123, 234, 345, 456]);
+    ptable!(CellLines, [FrBybl->"A", "B", FrBybr->"C"], [d->123, 234, 345, 456]);
 
     // You can also apply style to full rows :
-    let mut table = table!([Frb => "A", "B", "C"], [1, 2, 3, 4], ["A\nBCCZZZ\nDDD", 2, table]);
+    let mut table = table!(CellLines, [Frb => "A", "B", "C"], [1, 2, 3, 4], ["A\nBCCZZZ\nDDD", 2, table]);
     table.set_titles(row!["Title 1", "Title 2"]);
     table.set_format(*consts::FORMAT_DEFAULT);
     table.get_format().indent(8);
     table.printstd();
-    // println!("{:#?}", table);*/
+    // println!("{:#?}", table);
 }
