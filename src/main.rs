@@ -5,6 +5,7 @@ extern crate term;
 use prettytable::Table;
 use prettytable::row::Row;
 use prettytable::cell::Cell;
+use prettytable::cell_content::CellLines;
 use prettytable::format::*;
 
 use term::{Attr, color};
@@ -13,7 +14,13 @@ use term::{Attr, color};
 
 #[allow(dead_code)]
 fn main() {
-    let _ = table!();
+    let mut t: Table<CellLines> = Table::new();
+    t.add_row(Row::empty());
+    t.add_row(Row::new(vec![cell!(), cell!("10  \n  foobar")]));
+    t.add_row(row!["", "10  \n  foobar"]);
+    t.add_row(Row::empty());
+    t.printstd();
+    /*let _ = table!();
     let mut table = Table::new();
     table.add_row(row![FrByb->"ABC", "DEFG", "HIJKLMN"]);
     table.add_row(row!["foobar", "bar", "foo"]);
@@ -50,5 +57,5 @@ fn main() {
     table.set_format(*consts::FORMAT_DEFAULT);
     table.get_format().indent(8);
     table.printstd();
-    // println!("{:#?}", table);
+    // println!("{:#?}", table);*/
 }

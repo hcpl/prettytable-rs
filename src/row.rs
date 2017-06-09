@@ -8,23 +8,24 @@ use term::Terminal;
 
 use super::utils::NEWLINE;
 use super::cell::Cell;
+use super::cell_content::CellContent;
 use super::format::{TableFormat, ColumnPosition};
 
 /// Represent a table row made of cells
 #[derive(Clone, Debug)]
-pub struct Row {
-    cells: Vec<Cell>,
+pub struct Row<T: CellContent> {
+    cells: Vec<Cell<T>>,
 }
 
-impl Row {
+impl<T: CellContent> Row<T> {
     /// Create a new `Row` backed with `cells` vector
-    pub fn new(cells: Vec<Cell>) -> Row {
+    pub fn new(cells: Vec<Cell<T>>) -> Row<T> {
         Row { cells: cells }
     }
 
     /// Create an row of length `size`, with empty strings stored
-    pub fn empty() -> Row {
-        Self::new(vec![Cell::default(); 0])
+    pub fn empty() -> Row<T> {
+        Row::new(Vec::new())
     }
 
     /// Get the number of cells in this row
@@ -59,17 +60,17 @@ impl Row {
     }
 
     /// Get the cell at index `idx`
-    pub fn get_cell(&self, idx: usize) -> Option<&Cell> {
+    pub fn get_cell(&self, idx: usize) -> Option<&Cell<T>> {
         self.cells.get(idx)
     }
 
     /// Get the mutable cell at index `idx`
-    pub fn get_mut_cell(&mut self, idx: usize) -> Option<&mut Cell> {
+    pub fn get_mut_cell(&mut self, idx: usize) -> Option<&mut Cell<T>> {
         self.cells.get_mut(idx)
     }
 
     /// Set the `cell` in the row at the given `column`
-    pub fn set_cell(&mut self, cell: Cell, column: usize) -> Result<(), &str> {
+    pub fn set_cell(&mut self, cell: Cell<T>, column: usize) -> Result<(), &str> {
         if column >= self.len() {
             return Err("Cannot find cell");
         }
@@ -78,13 +79,13 @@ impl Row {
     }
 
     /// Append a `cell` at the end of the row
-    pub fn add_cell(&mut self, cell: Cell) {
+    pub fn add_cell(&mut self, cell: Cell<T>) {
         self.cells.push(cell);
     }
 
     /// Insert `cell` at position `index`. If `index` is higher than the row length,
     /// the cell will be appended at the end
-    pub fn insert_cell(&mut self, index: usize, cell: Cell) {
+    pub fn insert_cell(&mut self, index: usize, cell: Cell<T>) {
         if index < self.cells.len() {
             self.cells.insert(index, cell);
         } else {
@@ -100,23 +101,24 @@ impl Row {
     }
 
     /// Returns an immutable iterator over cells
-    pub fn iter(&self) -> Iter<Cell> {
+    pub fn iter(&self) -> Iter<Cell<T>> {
         self.cells.iter()
     }
 
     /// Returns an mutable iterator over cells
-    pub fn iter_mut(&mut self) -> IterMut<Cell> {
+    pub fn iter_mut(&mut self) -> IterMut<Cell<T>> {
         self.cells.iter_mut()
     }
 
     /// Internal only
-    fn __print<T: Write + ?Sized, F>(&self,
-                                     out: &mut T,
+    fn __print<W: Write + ?Sized, F>(&self,
+                                     out: &mut W,
                                      format: &TableFormat,
                                      col_width: &[usize],
                                      f: F)
                                      -> Result<(), Error>
-        where F: Fn(&Cell, &mut T, usize, usize, bool) -> Result<(), Error>
+        where T: Default,
+              F: Fn(&Cell<T>, &mut W, usize, usize, bool) -> Result<(), Error>
     {
         for i in 0..self.get_height() {
             //TODO: Wrap this into dedicated function one day
@@ -144,72 +146,76 @@ impl Row {
 
     /// Print the row to `out`, with `separator` as column separator, and `col_width`
     /// specifying the width of each columns
-    pub fn print<T: Write + ?Sized>(&self,
-                                    out: &mut T,
+    pub fn print<W: Write + ?Sized>(&self,
+                                    out: &mut W,
                                     format: &TableFormat,
                                     col_width: &[usize])
-                                    -> Result<(), Error> {
+                                    -> Result<(), Error>
+        where T: Default
+    {
         self.__print(out, format, col_width, Cell::print)
     }
 
     /// Print the row to terminal `out`, with `separator` as column separator, and `col_width`
     /// specifying the width of each columns. Apply style when needed
-    pub fn print_term<T: Terminal + ?Sized>(&self,
-                                            out: &mut T,
+    pub fn print_term<W: Terminal + ?Sized>(&self,
+                                            out: &mut W,
                                             format: &TableFormat,
                                             col_width: &[usize])
-                                            -> Result<(), Error> {
+                                            -> Result<(), Error>
+        where T: Default
+    {
         self.__print(out, format, col_width, Cell::print_term)
     }
 }
 
-impl Default for Row {
-    fn default() -> Row {
+impl<T: CellContent> Default for Row<T> {
+    fn default() -> Row<T> {
         Row::empty()
     }
 }
 
-impl Index<usize> for Row {
-    type Output = Cell;
+impl<T: CellContent> Index<usize> for Row<T> {
+    type Output = Cell<T>;
     fn index(&self, idx: usize) -> &Self::Output {
         &self.cells[idx]
     }
 }
 
-impl IndexMut<usize> for Row {
+impl<T: CellContent> IndexMut<usize> for Row<T> {
     fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
         &mut self.cells[idx]
     }
 }
 
-impl<A: ToString> FromIterator<A> for Row {
-    fn from_iter<T>(iterator: T) -> Row
-        where T: IntoIterator<Item = A>
+impl<T: CellContent + Clone> FromIterator<T> for Row<T> {
+    fn from_iter<I>(iterator: I) -> Row<T>
+        where I: IntoIterator<Item = T>
     {
-        Self::new(iterator.into_iter().map(|ref e| Cell::from(e)).collect())
+        Row::new(iterator.into_iter().map(|ref e| Cell::from(e)).collect())
     }
 }
 
-impl<T, A> From<T> for Row
-    where A: ToString,
-          T: IntoIterator<Item = A>
+impl<T, I> From<I> for Row<T>
+    where T: CellContent + Clone,
+          I: IntoIterator<Item = T>
 {
-    fn from(it: T) -> Row {
-        Self::from_iter(it)
+    fn from(it: I) -> Row<T> {
+        Row::from_iter(it)
     }
 }
 
-impl<'a> IntoIterator for &'a Row {
-    type Item = &'a Cell;
-    type IntoIter = Iter<'a, Cell>;
+impl<'a, T: CellContent> IntoIterator for &'a Row<T> {
+    type Item = &'a Cell<T>;
+    type IntoIter = Iter<'a, Cell<T>>;
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
 }
 
-impl<'a> IntoIterator for &'a mut Row {
-    type Item = &'a mut Cell;
-    type IntoIter = IterMut<'a, Cell>;
+impl<'a, T: CellContent> IntoIterator for &'a mut Row<T> {
+    type Item = &'a mut Cell<T>;
+    type IntoIter = IterMut<'a, Cell<T>>;
     fn into_iter(self) -> Self::IntoIter {
         self.iter_mut()
     }
