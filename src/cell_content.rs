@@ -57,3 +57,17 @@ impl CellContent for CellLines {
         self.lines.clone()
     }
 }
+
+impl<'a> CellContent for &'a CellLines {
+    fn get_width(&self) -> usize {
+        self.lines.iter().map(String::len).max().unwrap_or(0)
+    }
+
+    fn get_height(&self) -> usize {
+        self.lines.len()
+    }
+
+    fn get_lines(&self) -> Vec<String> {
+        self.lines.clone()
+    }
+}

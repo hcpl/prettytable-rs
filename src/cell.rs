@@ -22,10 +22,11 @@ pub struct Cell<T: CellContent> {
 impl<T: CellContent> Cell<T> {
     /// Create a new `Cell` initialized with content from `string`.
     /// Text alignment in cell is configurable with the `align` argument
-    pub fn new_align(content: &T, align: Alignment) -> Cell<T>
-            where T: Clone {
+    pub fn new_align<U>(content: U, align: Alignment) -> Cell<T>
+        where T: From<U>
+    {
         Cell {
-            content: content.clone(),
+            content: T::from(content),
             align: align,
             style: Vec::new(),
         }
@@ -33,8 +34,9 @@ impl<T: CellContent> Cell<T> {
 
     /// Create a new `Cell` initialized with content from `string`.
     /// By default, content is align to `LEFT`
-    pub fn new(content: &T) -> Cell<T>
-            where T: Clone {
+    pub fn new<U>(content: U) -> Cell<T>
+        where T: From<U>,
+    {
         Cell::new_align(content, Alignment::LEFT)
     }
 
@@ -212,8 +214,8 @@ fn term_error_to_io_error(te: ::term::Error) -> Error {
     }
 }
 
-impl<'a, T: CellContent + Clone> From<&'a T> for Cell<T> {
-    fn from(value: &T) -> Cell<T> {
+impl<T: CellContent> From<T> for Cell<T> {
+    fn from(value: T) -> Cell<T> {
         Cell::new(value)
     }
 }
@@ -265,7 +267,7 @@ impl<T: CellContent + Default> Default for Cell<T> {
 #[macro_export]
 macro_rules! cell {
     () => ($crate::cell::Cell::default());
-    ($value:expr) => ($crate::cell::Cell::new(&From::from($value)));
+    ($value:expr) => ($crate::cell::Cell::new($value));
     ($style:ident -> $value:expr) => (cell!($value).style_spec(stringify!($style)));
 
     ($type:ty) => ($crate::cell::Cell::<$type>::default());

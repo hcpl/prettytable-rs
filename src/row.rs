@@ -188,16 +188,16 @@ impl<T: CellContent> IndexMut<usize> for Row<T> {
     }
 }
 
-impl<T: CellContent + Clone> FromIterator<T> for Row<T> {
+impl<T: CellContent> FromIterator<T> for Row<T> {
     fn from_iter<I>(iterator: I) -> Row<T>
         where I: IntoIterator<Item = T>
     {
-        Row::new(iterator.into_iter().map(|ref e| Cell::from(e)).collect())
+        Row::new(iterator.into_iter().map(Cell::from).collect())
     }
 }
 
 impl<T, I> From<I> for Row<T>
-    where T: CellContent + Clone,
+    where T: CellContent,
           I: IntoIterator<Item = T>
 {
     fn from(it: I) -> Row<T> {

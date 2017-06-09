@@ -326,11 +326,11 @@ impl<T: CellContent> Table<T> {
     }
 
     /// Modify a single element in the table
-    pub fn set_element(&mut self, element: &T, column: usize, row: usize) -> Result<(), &str>
-            where T: Clone {
+    pub fn set_element<U>(&mut self, element: U, column: usize, row: usize) -> Result<(), &str>
+            where T: From<U> {
         let rowline = self.get_mut_row(row).ok_or("Cannot find row")?;
         // TODO: If a cell already exist, copy it's alignment parameter
-        rowline.set_cell(Cell::new(&element), column)
+        rowline.set_cell(Cell::new(element), column)
     }
 
     /// Remove the row at position `index`. Silently skip if the row does not exist
@@ -433,7 +433,7 @@ impl Table<CellLines> {
                         .map(|row| {
                                  Row::new(row.unwrap()
                                               .into_iter()
-                                              .map(|cell| Cell::new(&CellLines::from(cell)))
+                                              .map(Cell::new)
                                               .collect())
                              })
                         .collect())
@@ -477,7 +477,7 @@ impl<'a, T: CellContent + Default> fmt::Display for TableSlice<'a, T> {
 }
 
 impl<T, A> FromIterator<A> for Table<T>
-    where T: CellContent + Clone,
+    where T: CellContent,
           A: IntoIterator<Item = T>,
 {
     fn from_iter<I>(iterator: I) -> Table<T>
@@ -488,7 +488,7 @@ impl<T, A> FromIterator<A> for Table<T>
 }
 
 impl<T, I, A> From<I> for Table<T>
-    where T: CellContent + Clone,
+    where T: CellContent,
           A: IntoIterator<Item = T>,
           I: IntoIterator<Item = A>
 {
@@ -988,17 +988,14 @@ mod tests {
         use cell::Cell;
 
         static CSV_S: &'static str = "ABC,DEFG,HIJKLMN\n\
-                                  foobar,bar,foo\n\
-                                  foobar2,bar2,foo2\n";
+                                      foobar,bar,foo\n\
+                                      foobar2,bar2,foo2\n";
 
-        fn test_table() -> Table {
+        fn test_table() -> Table<CellLines> {
             let mut table = Table::new();
-            table
-                .add_row(Row::new(vec![Cell::new("ABC"), Cell::new("DEFG"), Cell::new("HIJKLMN")]));
+            table.add_row(Row::new(vec![Cell::new("ABC"), Cell::new("DEFG"), Cell::new("HIJKLMN")]));
             table.add_row(Row::new(vec![Cell::new("foobar"), Cell::new("bar"), Cell::new("foo")]));
-            table.add_row(Row::new(vec![Cell::new("foobar2"),
-                                        Cell::new("bar2"),
-                                        Cell::new("foo2")]));
+            table.add_row(Row::new(vec![Cell::new("foobar2"), Cell::new("bar2"),Cell::new("foo2")]));
             table
         }
 
